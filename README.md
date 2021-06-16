@@ -9,7 +9,46 @@ This tutorial assumes you have the following tools installed
 * LocalStack CLI (TODO Link)
 * `awslocal` (could this be installed by default when installing LocalStack?)
 
-## Setup
+## Quick Start
+Two bash scripts are available to deploy and teardown the necessary AWS resources.
+
+### Deployment
+To deploy the resources execute the `setup.sh` script passing either `aws` or `awslocal`
+as first argument depending on whether you want to deploy the resources on AWS or LocalStack.
+
+**AWS:**
+```
+./setup.sh aws
+```
+
+**LocalStack:**
+```
+./setup.sh awslocal
+```
+
+This creates the Lambda function, the API Gateway plus all necessary permissions.
+The script prints the URL which can be used to call the Lambda function:
+```
+...
+API endpoint: https://b7awznayyi.execute-api.us-east-1.amazonaws.com
+Deployment successful.
+```
+
+### Teardown
+To tear down the resources again, simply execute the script `cleanup.sh` 
+again passing `aws` or `awslocal` as first argument.
+
+**AWS:**
+```
+./cleanup.sh aws
+```
+
+**LocalStack:**
+```
+./cleanup.sh awslocal
+```
+## Step by Step Instructions
+### Setup
 1. Run command `alias aws=awslocal`. 
 Now you're running each `aws` command against LocalStack.
 
@@ -18,7 +57,7 @@ Now you're running each `aws` command against LocalStack.
 localstack start
 ```
 
-## Create the Lambda function
+### Create the Lambda function
 Create the function that will be responsible for handling form submissions:
 ```
 exports.handler = async (event) => {
@@ -27,7 +66,7 @@ exports.handler = async (event) => {
 };
 ```
 
-### Create the Lambda execution role
+#### Create the Lambda execution role
 Our function is going to need certain permissions in order to access other AWS resources.
 For now, our function is going to need just the following permissions:
 
@@ -76,7 +115,7 @@ Note the `"Arn"` property. ARN stands for Amazon Resource Name is used to [uniqu
 We will need this in the next step when we create the Lambda function. 
 
 
-### Upload the function to AWS Lambda
+#### Upload the function to AWS Lambda
 Create a zip archive containing the function
 ```
 zip function.zip index.js
@@ -142,9 +181,15 @@ This will produce the following output. This time take note of the function's AR
 
 ```
 
-## Expose function via HTTP
+### Expose function via HTTP
 Next we need to expose the function as a public API via HTTP.
 For this, we're going to use [Amazon API Gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/getting-started.html).
+
+#### Using API Gateway V1
+
+
+#### Using API Gateway V2
+Using API Gateway V2, creating a new API connected to our Lambda function is as simple as executing the following step.
 Note that we set the `--target` parameter to our Lambda function's ARN. 
 ```
 aws apigatewayv2 create-api \
@@ -169,7 +214,7 @@ But first we need to add a permission for the API to invoke the Lambda function.
 Execute the following command replacing {API_ID} with the API ID:
 ```
 aws lambda add-permission \
---function-name arn:aws:lambda:us-east-1:000000000000:function:my-function \
+--function-name my-function \
 --statement-id api-gateway-invoke \
 --action lambda:InvokeFunction \
 --principal apigateway.amazonaws.com \
@@ -181,13 +226,13 @@ Now you can test the endpoint:
 curl http://d0bde0d3.execute-api.localhost.localstack.cloud:4566
 ```
 
-## Store form submissions in DynamoDB
+### Store form submissions in DynamoDB
 So far we're not doing much in our form handling logic.
 As a next step, we're going to add persistence of form submissions via Amazon DynamoDB.
 
 TODO
 
-## Teardown
+### Teardown
 Remove Lambda function
 TODO
 
